@@ -63,17 +63,6 @@ export function RecentTrades() {
                 <h4 className="font-medium text-slate-800 truncate" title={trade.market}>
                   {trade.market}
                 </h4>
-                <div className="flex items-center mt-1">
-                  <span className={`inline-block px-2 py-1 text-xs rounded font-medium ${trade.position === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {trade.position}
-                  </span>
-                  <span className="text-sm text-slate-500 ml-2">
-                    ${trade.amount}
-                  </span>
-                  <span className="ml-2 text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-800">
-                    closed
-                  </span>
-                </div>
               </div>
               <div className={`flex items-center ${trade.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <span className="font-semibold mr-1">
