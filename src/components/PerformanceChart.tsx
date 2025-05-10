@@ -1,67 +1,46 @@
 import React, { useState } from 'react';
+
 export function PerformanceChart() {
-  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
-  const mockData = [{
-    month: 'Jan',
-    profit: 250
-  }, {
-    month: 'Feb',
-    profit: -120
-  }, {
-    month: 'Mar',
-    profit: 450
-  }, {
-    month: 'Apr',
-    profit: 180
-  }, {
-    month: 'May',
-    profit: -200
-  }, {
-    month: 'Jun',
-    profit: 320
-  }, {
-    month: 'Jul',
-    profit: 280
-  }, {
-    month: 'Aug',
-    profit: -150
-  }, {
-    month: 'Sep',
-    profit: 420
-  }, {
-    month: 'Oct',
-    profit: 180
-  }, {
-    month: 'Nov',
-    profit: 290
-  }, {
-    month: 'Dec',
-    profit: 380
-  }];
-  const cumulativeData = mockData.reduce((acc, curr) => {
-    const lastTotal = acc.length > 0 ? acc[acc.length - 1].totalProfit : 0;
-    acc.push({
-      ...curr,
-      totalProfit: lastTotal + curr.profit
-    });
-    return acc;
-  }, [] as Array<(typeof mockData)[0] & {
-    totalProfit: number;
-  }>);
-  const maxProfit = Math.max(...cumulativeData.map(d => d.totalProfit));
-  const minProfit = Math.min(...cumulativeData.map(d => d.totalProfit));
-  const range = Math.max(Math.abs(maxProfit), Math.abs(minProfit));
-  const points = cumulativeData.map((data, index) => {
-    const x = index / (mockData.length - 1) * 100;
-    const y = 50 - data.totalProfit / range * 45;
-    return {
-      x,
-      y,
-      ...data
-    };
-  });
-  const linePath = `M ${points.map(point => `${point.x} ${point.y}`).join(' L ')}`;
-  return <div className="w-full">
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  
+  const mockData = [
+    { month: 'Jan', profit: 250 },
+    { month: 'Feb', profit: -120 },
+    { month: 'Mar', profit: 450 },
+    { month: 'Apr', profit: 180 },
+    { month: 'May', profit: -200 },
+    { month: 'Jun', profit: 320 },
+    { month: 'Jul', profit: 280 },
+    { month: 'Aug', profit: -150 },
+    { month: 'Sep', profit: -420 },
+    { month: 'Oct', profit: 180 },
+    { month: 'Nov', profit: 290 },
+    { month: 'Dec', profit: 380 }
+  ];
+
+  // Calculate total profit/loss
+  const totalPL = mockData.reduce((sum, item) => sum + item.profit, 0);
+  
+  // Find the maximum profit/loss to scale the bars
+  const maxProfit = Math.max(...mockData.map(d => d.profit));
+  const minProfit = Math.min(...mockData.map(d => d.profit));
+  const maxValue = Math.max(Math.abs(maxProfit), Math.abs(minProfit));
+  
+  // Bar width calculation (slightly less than 100/12 to add spacing)
+  const barWidth = 5.5;
+  const barGap = 2.5;
+
+  // Function to format numbers in compact form
+  const formatCompactNumber = (num: number) => {
+    const absNum = Math.abs(num);
+    if (absNum >= 1000) {
+      return (absNum / 1000).toFixed(1) + 'K';
+    }
+    return absNum.toString();
+  };
+
+  return (
+    <div className="w-full bg-white p-6 rounded-lg">
       <div className="flex justify-between items-center mb-8">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-slate-800">Monthly P/L</h3>
@@ -71,44 +50,92 @@ export function PerformanceChart() {
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-slate-800">
-            ${points[points.length - 1].totalProfit.toLocaleString()}
+            ${totalPL.toLocaleString()}
           </div>
           <div className="text-sm text-slate-500">Total P/L</div>
         </div>
       </div>
+      
       <div className="relative w-full h-[400px]">
+        {/* Grid lines */}
         <div className="absolute inset-0 flex flex-col justify-between">
-          {[...Array(5)].map((_, i) => <div key={i} className="border-t border-slate-100 w-full" />)}
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="border-t border-slate-100 w-full" />
+          ))}
         </div>
+        
+        {/* Y-axis labels */}
         <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-slate-400 py-6">
-          <div>+${range.toLocaleString()}</div>
-          <div>+${(range / 2).toLocaleString()}</div>
+          <div>+${maxValue.toLocaleString()}</div>
+          <div>+${(maxValue / 2).toLocaleString()}</div>
           <div>$0</div>
-          <div>-${(range / 2).toLocaleString()}</div>
-          <div>-${range.toLocaleString()}</div>
+          <div>-${(maxValue / 2).toLocaleString()}</div>
+          <div>-${maxValue.toLocaleString()}</div>
         </div>
+        
+        {/* Chart area */}
         <div className="absolute inset-0 pl-12">
-          <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
-            <line x1="0" y1="50%" x2="100%" y2="50%" className="stroke-slate-200" strokeWidth="1" />
-            <path d={linePath} fill="none" className="stroke-blue-500" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-            {points.map((point, index) => <g key={index}>
-                <circle cx={`${point.x}%`} cy={`${point.y}%`} r="12" className="fill-transparent cursor-pointer" onMouseEnter={() => setHoveredPoint(index)} onMouseLeave={() => setHoveredPoint(null)} />
-                <circle cx={`${point.x}%`} cy={`${point.y}%`} r="3" className={`${hoveredPoint === index ? 'fill-blue-500 stroke-white stroke-2' : 'fill-white stroke-blue-500'}`} />
-                {hoveredPoint === index && <g>
-                    <rect x={`${point.x}%`} y={`${point.y}%`} transform={`translate(-50, -40)`} width="100" height="30" rx="4" className="fill-slate-800" />
-                    <text x={`${point.x}%`} y={`${point.y}%`} transform={`translate(0, -20)`} className="text-xs fill-white text-center" textAnchor="middle">
-                      ${point.totalProfit.toLocaleString()}
-                    </text>
-                  </g>}
-                <text x={`${point.x}%`} y="100%" className="text-xs fill-slate-500" textAnchor="middle">
-                  {point.month}
-                </text>
-              </g>)}
+          <svg 
+            className="w-full h-full overflow-visible" 
+            viewBox="0 0 100 100" 
+            preserveAspectRatio="none"
+          >
+            {/* Zero line */}
+            <line x1="0" y1="50" x2="100" y2="50" className="stroke-slate-200" strokeWidth="1" />
+            
+            {/* Bars */}
+            {mockData.map((data, index) => {
+              const x = index * (barWidth + barGap);
+              const isPositive = data.profit >= 0;
+              const barHeight = Math.abs(data.profit) / maxValue * 45;
+              const y = isPositive ? 50 - barHeight : 50;
+              
+              return (
+                <g 
+                  key={index}
+                  onMouseEnter={() => setHoveredBar(index)}
+                  onMouseLeave={() => setHoveredBar(null)}
+                >
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={barHeight}
+                    rx="1"
+                    className={`${isPositive ? 'fill-blue-500' : 'fill-red-500'} opacity-80 hover:opacity-100 cursor-pointer`}
+                  />
+                  
+                  {/* Tooltip */}
+                  {hoveredBar === index && (
+                    <g transform={`translate(${x + barWidth/2}, ${y - 2})`}>
+                      <text
+                        className="text-[2.5px] fill-slate-800 font-medium text-center"
+                        textAnchor="middle"
+                        transform="scale(0.5, 1)"
+                      >
+                        ${formatCompactNumber(data.profit)}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
           </svg>
         </div>
+        
+        {/* X-axis month labels */}
+        <div className="absolute bottom-0 left-12 right-0 flex text-xs text-slate-500 pb-1">
+          {mockData.map((data, i) => {
+            const position = i * (barWidth + barGap) + barWidth/2;
+            return (
+              <div key={i} className="absolute text-center" style={{left: `${position}%`, transform: 'translateX(-50%)'}}>
+                {data.month}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="mt-8 text-sm text-slate-500 text-center">
-        Hover over points to see cumulative P/L values
-      </div>
-    </div>;
+    
+    </div>
+  );
 }

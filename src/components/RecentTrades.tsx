@@ -1,20 +1,34 @@
 import React from 'react';
-import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
+// import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
+
+// Type definition for trades - all trades are now closed
+interface Trade {
+  id: number;
+  market: string;
+  position: 'YES' | 'NO';
+  amount: number;
+  date: string;
+  status: 'closed';
+  profit: number;
+}
+
 export function RecentTrades() {
-  const mockTrades = [{
+  const mockTrades: Trade[] = [{
     id: 1,
     market: 'Will BTC exceed $60K in Q3?',
     position: 'YES',
     amount: 150,
     date: '2024-03-01',
-    status: 'open'
+    status: 'closed',
+    profit: 120
   }, {
     id: 2,
     market: 'Will Fed raise rates in July?',
     position: 'NO',
     amount: 200,
     date: '2024-02-28',
-    status: 'open'
+    status: 'closed',
+    profit: -50
   }, {
     id: 3,
     market: 'Will SpaceX launch Starship in 2023?',
@@ -40,6 +54,7 @@ export function RecentTrades() {
     status: 'closed',
     profit: 110
   }];
+
   return <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="divide-y divide-slate-100">
         {mockTrades.map(trade => <div key={trade.id} className="p-4 hover:bg-slate-50">
@@ -55,17 +70,19 @@ export function RecentTrades() {
                   <span className="text-sm text-slate-500 ml-2">
                     ${trade.amount}
                   </span>
-                  <span className={`ml-2 text-xs px-2 py-1 rounded-full ${trade.status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>
-                    {trade.status}
+                  <span className="ml-2 text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-800">
+                    closed
                   </span>
                 </div>
               </div>
-              {trade.status === 'closed' && <div className={`flex items-center ${trade.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {trade.profit > 0 ? <ArrowUpIcon className="h-4 w-4 mr-1" /> : <ArrowDownIcon className="h-4 w-4 mr-1" />}
+              <div className={`flex items-center ${trade.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="font-semibold mr-1">
+                    {trade.profit > 0 ? 'Win' : 'Loss'}
+                  </span>
                   <span className="font-semibold">
                     ${Math.abs(trade.profit)}
                   </span>
-                </div>}
+              </div>
             </div>
           </div>)}
       </div>
