@@ -91,6 +91,11 @@ export function PerformanceChart() {
   // Calculate total profit/loss
   const totalPL = chartData.reduce((sum, item) => sum + item.profit, 0);
 
+  // Format total P/L with negative sign before dollar sign
+  const formattedTotalPL = totalPL >= 0 
+    ? `$${totalPL.toLocaleString()}`
+    : `-$${Math.abs(totalPL).toLocaleString()}`;
+
   // Find the maximum profit/loss to scale the bars
   const profits = chartData.map(d => d.profit);
   const maxProfit = profits.length > 0 ? Math.max(...profits) : 0;
@@ -110,13 +115,16 @@ export function PerformanceChart() {
   const barWidth = unitWidth / (1 + gapRatio);
   const barGap = barWidth * gapRatio;
 
-  // Function to format numbers in compact form
+  // Function to format numbers in compact form with negative sign before dollar
   const formatCompactNumber = (num: number) => {
     const absNum = Math.abs(num);
+    const isNegative = num < 0;
+    const prefix = isNegative ? '-$' : '$';
+    
     if (absNum >= 1000) {
-      return (num / 1000).toFixed(2) + 'K';
+      return `${prefix}${(absNum / 1000).toFixed(2)}K`;
     }
-    return num.toFixed(2);
+    return `${prefix}${absNum.toFixed(2)}`;
   };
 
   if (isLoading) {
@@ -138,7 +146,7 @@ export function PerformanceChart() {
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-slate-800">
-            ${totalPL.toLocaleString()}
+            {formattedTotalPL}
           </div>
           <div className="text-sm text-slate-500">Total P/L</div>
         </div>
@@ -154,8 +162,8 @@ export function PerformanceChart() {
         
         {/* Y-axis labels */}
         <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-slate-400 py-6">
-          <div>+${yAxisMax}</div>
-          <div>+${yAxisMax / 2}</div>
+          <div>${yAxisMax}</div>
+          <div>${yAxisMax / 2}</div>
           <div>$0</div>
           <div>-${yAxisMax / 2}</div>
           <div>-${yAxisMax}</div>
@@ -171,7 +179,7 @@ export function PerformanceChart() {
             {/* Zero line */}
             <line x1="0" y1="50" x2="100" y2="50" className="stroke-slate-200" strokeWidth="1" />
             
-            {/* Bars */}
+            {/* Bars and hover areas */}
             {chartData.map((data, index) => {
               const x = index * (barWidth + barGap);
               const isPositive = data.profit >= 0;
@@ -181,27 +189,38 @@ export function PerformanceChart() {
               return (
                 <g 
                   key={index}
-                  onMouseEnter={() => setHoveredBar(index)}
-                  onMouseLeave={() => setHoveredBar(null)}
                 >
+                  {/* Invisible hover area for entire column */}
+                  <rect
+                    x={x}
+                    y={5} /* Start from top with some padding */
+                    width={barWidth}
+                    height={90} /* Cover almost the entire height */
+                    fill="transparent"
+                    onMouseEnter={() => setHoveredBar(index)}
+                    onMouseLeave={() => setHoveredBar(null)}
+                    className="cursor-pointer"
+                  />
+                  
+                  {/* Actual visible bar */}
                   <rect
                     x={x}
                     y={y}
                     width={barWidth}
                     height={barHeight}
                     rx="1"
-                    className={`${isPositive ? 'fill-blue-500' : 'fill-red-500'} opacity-80 hover:opacity-100 cursor-pointer`}
+                    className={`${isPositive ? 'fill-blue-500' : 'fill-red-500'} opacity-80 hover:opacity-100`}
                   />
                   
                   {/* Tooltip */}
                   {hoveredBar === index && (
-                    <g transform={`translate(${x + barWidth/2}, ${y - 2})`}>
+                    <g transform={`translate(${x + barWidth/2}, ${isPositive ? y - 2 : y + barHeight + 4})`}>
                       <text
                         className="text-[2.5px] fill-slate-800 font-medium text-center"
                         textAnchor="middle"
                         transform="scale(0.4, 1)"
                       >
-                        ${formatCompactNumber(data.profit)}
+                        {formatCompactNumber(data.profit)}
                       </text>
                     </g>
                   )}

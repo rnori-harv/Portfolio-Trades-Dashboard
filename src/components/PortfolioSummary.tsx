@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUpIcon, ActivityIcon, LayersIcon } from 'lucide-react';
+import { TrendingUpIcon, TrendingDownIcon, ActivityIcon, LayersIcon } from 'lucide-react';
 
 interface PortfolioSummaryProps {
   data: {
@@ -12,12 +12,25 @@ interface PortfolioSummaryProps {
 export function PortfolioSummary({
   data
 }: PortfolioSummaryProps) {
+  // Determine color based on profit value
+  const isProfitPositive = data.totalProfit >= 0;
+  const profitIconColor = isProfitPositive ? 'text-green-500' : 'text-red-500';
+  const profitBgColor = isProfitPositive ? 'bg-green-50' : 'bg-red-50';
+  const profitTextColor = isProfitPositive ? 'text-green-700' : 'text-red-700';
+  
+  // Format profit with negative sign before dollar sign
+  const formattedProfit = isProfitPositive 
+    ? `$${data.totalProfit.toLocaleString()}`
+    : `-$${Math.abs(data.totalProfit).toLocaleString()}`;
+
   const stats = [{
     title: 'Total Profit',
-    value: `$${data.totalProfit.toLocaleString()}`,
-    icon: <TrendingUpIcon className="h-6 w-6 text-green-500" />,
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700'
+    value: formattedProfit,
+    icon: isProfitPositive 
+      ? <TrendingUpIcon className={`h-6 w-6 ${profitIconColor}`} />
+      : <TrendingDownIcon className={`h-6 w-6 ${profitIconColor}`} />,
+    bgColor: profitBgColor,
+    textColor: profitTextColor
   }, {
     title: 'Win Rate',
     value: `${data.winRate}%`,
