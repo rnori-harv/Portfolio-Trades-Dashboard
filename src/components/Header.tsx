@@ -5,7 +5,7 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <TrendingUpIcon className="h-6 w-6 text-blue-600" />
-          <h1 className="text-xl font-bold">Rakesh's Movie Predictions</h1>
+          <h1 className="text-xl font-bold">Rakesh's Kalshi Trades</h1>
         </div>
         
         <div className="flex items-center">
