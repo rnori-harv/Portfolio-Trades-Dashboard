@@ -53,6 +53,7 @@ export function RecentTrades() {
         .from('settled_positions')
         .select('*')
         .order('last_updated_ts', { ascending: false })
+        .order('ticker', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
 
       if (supabaseError) throw supabaseError;
