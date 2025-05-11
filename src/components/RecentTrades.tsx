@@ -110,7 +110,7 @@ export function RecentTrades() {
                   {trade.market_name}
                 </h4>
                 <p className="text-sm text-slate-500 mt-1">
-                  {formatDate(trade.last_updated_ts)} • {trade.ticker}
+                  {formatDate(trade.last_updated_ts)}
                 </p>
               </div>
               <div className={`flex items-center ${trade.realized_pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>
