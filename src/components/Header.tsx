@@ -19,6 +19,9 @@ export function Header() {
             <a href="#positions" className="text-slate-600 hover:text-blue-600">
               Positions
             </a>
+            <a href="https://rakeshnori.com/" className="text-slate-600 hover:text-blue-600" target="_blank" rel="noopener noreferrer">
+              About Me
+            </a>
           </div>
           
           <button className="md:hidden p-2 rounded-full hover:bg-slate-100">

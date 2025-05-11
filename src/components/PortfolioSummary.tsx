@@ -1,8 +1,17 @@
 import React from 'react';
 import { TrendingUpIcon, ActivityIcon, LayersIcon } from 'lucide-react';
+
+interface PortfolioSummaryProps {
+  data: {
+    totalProfit: number;
+    winRate: number;
+    totalTrades: number;
+  }
+}
+
 export function PortfolioSummary({
   data
-}) {
+}: PortfolioSummaryProps) {
   const stats = [{
     title: 'Total Profit',
     value: `$${data.totalProfit.toLocaleString()}`,

@@ -1,43 +1,131 @@
-import React, { useState } from 'react';
+    // src/components/PerformanceChart.tsx
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient'; // Adjust path if necessary
+
+interface SettledPosition {
+  ticker: string;
+  realized_pnl: number;
+  last_updated_ts: string; // Assuming it's a string like 'YYYY-MM-DD HH:MM:SS.ssssss+ZZ'
+  market_name: string;
+}
+
+interface MonthlyPL {
+  month: string;
+  profit: number;
+}
 
 export function PerformanceChart() {
+  const [chartData, setChartData] = useState<MonthlyPL[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchSettledPositions = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: supabaseError } = await supabase
+          .from('settled_positions')
+          .select('realized_pnl, last_updated_ts');
+
+        if (supabaseError) {
+          throw supabaseError;
+        }
+
+        if (data) {
+          // Process data to aggregate P/L by month
+          const monthlyData: { [key: string]: number } = {}; // e.g., {"2024-01": 100, "2024-02": -50}
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+          data.forEach((item: Pick<SettledPosition, 'realized_pnl' | 'last_updated_ts'>) => {
+            const date = new Date(item.last_updated_ts);
+            const year = date.getFullYear();
+            const monthIndex = date.getMonth(); // 0-11
+            const monthKey = `${year}-${monthNames[monthIndex]}`; // For unique month identification across years
+
+            if (monthlyData[monthKey]) {
+              monthlyData[monthKey] += item.realized_pnl / 100;
+            } else {
+              monthlyData[monthKey] = item.realized_pnl / 100;
+            }
+          });
+
+          // Transform into the array format required by the chart
+          // Assuming you want to display for a single year, or sort chronologically
+          // For this example, let's extract month names and sort.
+          // You might want a more robust sorting, especially if data spans multiple years.
+          const processedData: MonthlyPL[] = Object.entries(monthlyData)
+            .map(([monthYearKey, profit]) => {
+                // Extract month name, assuming format "YYYY-Mon"
+                const monthName = monthYearKey.split('-')[1];
+                return { month: monthName, profit: profit };
+            })
+            .sort((a, b) => {
+                // A simple sort by month name array order, good for a single year
+                return monthNames.indexOf(a.month) - monthNames.indexOf(b.month);
+            });
+          
+          // If you want to ensure all 12 months are present, even with 0 profit:
+          const finalChartData = monthNames.map(monthName => {
+            const existingMonthData = processedData.find(d => d.month === monthName);
+            return existingMonthData || { month: monthName, profit: 0 };
+          });
+
+
+          setChartData(finalChartData);
+        }
+      } catch (err: any) {
+        console.error("Error fetching or processing data:", err);
+        setError(err.message || 'Failed to fetch data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettledPositions();
+  }, []); // Empty dependency array means this runs once on mount
   
-  const mockData = [
-    { month: 'Jan', profit: 250 },
-    { month: 'Feb', profit: -120 },
-    { month: 'Mar', profit: 450 },
-    { month: 'Apr', profit: 180 },
-    { month: 'May', profit: -200 },
-    { month: 'Jun', profit: 320 },
-    { month: 'Jul', profit: 280 },
-    { month: 'Aug', profit: -150 },
-    { month: 'Sep', profit: -420 },
-    { month: 'Oct', profit: 180 },
-    { month: 'Nov', profit: 290 },
-    { month: 'Dec', profit: 380 }
-  ];
 
   // Calculate total profit/loss
-  const totalPL = mockData.reduce((sum, item) => sum + item.profit, 0);
-  
+  const totalPL = chartData.reduce((sum, item) => sum + item.profit, 0);
+
   // Find the maximum profit/loss to scale the bars
-  const maxProfit = Math.max(...mockData.map(d => d.profit));
-  const minProfit = Math.min(...mockData.map(d => d.profit));
-  const maxValue = Math.max(Math.abs(maxProfit), Math.abs(minProfit));
+  const profits = chartData.map(d => d.profit);
+  const maxProfit = profits.length > 0 ? Math.max(...profits) : 0;
+  const minProfit = profits.length > 0 ? Math.min(...profits) : 0;
+  const maxValue = Math.max(Math.abs(maxProfit), Math.abs(minProfit), 1); // Ensure maxValue is at least 1 to prevent division by zero if all profits are 0
   
-  // Bar width calculation (slightly less than 100/12 to add spacing)
-  const barWidth = 5.5;
-  const barGap = 2.5;
+  // Calculate the ceiling for Y-axis scale (in increments of 5)
+  const yAxisMax = Math.ceil(maxValue / 5) * 5;
+  
+  // Calculate bar width and gap to fill the entire width
+  const totalBars = chartData.length;
+  const totalWidthPercentage = 100; // Full width of the SVG
+  const gapRatio = 0.4; // Ratio of gap to bar width
+  
+  // Calculate the width each bar+gap unit should take
+  const unitWidth = totalWidthPercentage / totalBars;
+  const barWidth = unitWidth / (1 + gapRatio);
+  const barGap = barWidth * gapRatio;
 
   // Function to format numbers in compact form
   const formatCompactNumber = (num: number) => {
     const absNum = Math.abs(num);
     if (absNum >= 1000) {
-      return (absNum / 1000).toFixed(1) + 'K';
+      return (num / 1000).toFixed(2) + 'K';
     }
-    return absNum.toString();
+    return num.toFixed(2);
   };
+
+  if (isLoading) {
+    return <div className="w-full bg-white p-6 rounded-lg text-center">Loading P/L data...</div>;
+  }
+
+  if (error) {
+    return <div className="w-full bg-white p-6 rounded-lg text-center text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="w-full bg-white p-6 rounded-lg">
@@ -66,11 +154,11 @@ export function PerformanceChart() {
         
         {/* Y-axis labels */}
         <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-slate-400 py-6">
-          <div>+${maxValue.toLocaleString()}</div>
-          <div>+${(maxValue / 2).toLocaleString()}</div>
+          <div>+${yAxisMax}</div>
+          <div>+${yAxisMax / 2}</div>
           <div>$0</div>
-          <div>-${(maxValue / 2).toLocaleString()}</div>
-          <div>-${maxValue.toLocaleString()}</div>
+          <div>-${yAxisMax / 2}</div>
+          <div>-${yAxisMax}</div>
         </div>
         
         {/* Chart area */}
@@ -84,10 +172,10 @@ export function PerformanceChart() {
             <line x1="0" y1="50" x2="100" y2="50" className="stroke-slate-200" strokeWidth="1" />
             
             {/* Bars */}
-            {mockData.map((data, index) => {
+            {chartData.map((data, index) => {
               const x = index * (barWidth + barGap);
               const isPositive = data.profit >= 0;
-              const barHeight = Math.abs(data.profit) / maxValue * 45;
+              const barHeight = Math.abs(data.profit) / yAxisMax * 45;
               const y = isPositive ? 50 - barHeight : 50;
               
               return (
@@ -111,7 +199,7 @@ export function PerformanceChart() {
                       <text
                         className="text-[2.5px] fill-slate-800 font-medium text-center"
                         textAnchor="middle"
-                        transform="scale(0.5, 1)"
+                        transform="scale(0.4, 1)"
                       >
                         ${formatCompactNumber(data.profit)}
                       </text>
@@ -125,7 +213,7 @@ export function PerformanceChart() {
         
         {/* X-axis month labels */}
         <div className="absolute bottom-0 left-12 right-0 flex text-xs text-slate-500 pb-1">
-          {mockData.map((data, i) => {
+          {chartData.map((data, i) => {
             const position = i * (barWidth + barGap) + barWidth/2;
             return (
               <div key={i} className="absolute text-center" style={{left: `${position}%`, transform: 'translateX(-50%)'}}>
