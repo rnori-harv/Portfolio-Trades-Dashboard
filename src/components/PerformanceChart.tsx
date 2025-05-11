@@ -209,7 +209,9 @@ export function PerformanceChart() {
                     width={barWidth}
                     height={barHeight}
                     rx="1"
-                    className={`${isPositive ? 'fill-blue-500' : 'fill-red-500'} opacity-80 hover:opacity-100`}
+                    onMouseEnter={() => setHoveredBar(index)}
+                    onMouseLeave={() => setHoveredBar(null)}
+                    className={`${isPositive ? 'fill-green-500' : 'fill-red-500'} opacity-100 cursor-pointer`}
                   />
                   
                   {/* Tooltip */}
