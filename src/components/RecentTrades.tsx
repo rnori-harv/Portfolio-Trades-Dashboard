@@ -139,20 +139,20 @@ export function RecentTrades() {
           if (trade) {
             return (
               <div key={index} className="p-4 hover:bg-slate-50">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-800 truncate" title={trade.market_name}>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-slate-800 truncate text-sm sm:text-base" title={trade.market_name}>
                       {trade.market_name}
                     </h4>
                     <p className="text-sm text-slate-500 mt-1">
                       {formatDate(trade.last_updated_ts)}
                     </p>
                   </div>
-                  <div className={`flex items-center ${trade.realized_pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    <span className="font-semibold mr-1">
+                  <div className={`flex-shrink-0 flex flex-col items-end sm:flex-row sm:items-center ${trade.realized_pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className="font-semibold mr-0 sm:mr-1 text-xs sm:text-sm">
                       {trade.realized_pnl > 0 ? 'Win' : 'Loss'}
                     </span>
-                    <span className="font-semibold">
+                    <span className="font-semibold text-sm sm:text-base">
                       {trade.realized_pnl > 0 
                         ? `$${Math.abs(trade.realized_pnl / 100).toFixed(2)}`
                         : `-$${Math.abs(trade.realized_pnl / 100).toFixed(2)}`}

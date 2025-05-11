@@ -136,23 +136,23 @@ export function PerformanceChart() {
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg">
-      <div className="flex justify-between items-center mb-8">
-        <div className="space-y-1">
+    <div className="w-full bg-white p-4 md:p-6 rounded-lg">
+      <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 md:mb-8">
+        <div className="space-y-1 mb-4 md:mb-0">
           <h3 className="text-lg font-semibold text-slate-800">Monthly P/L</h3>
           <p className="text-sm text-slate-500">
             Performance tracking for 2024
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-slate-800">
+        <div className="text-left md:text-right">
+          <div className="text-xl md:text-2xl font-bold text-slate-800">
             {formattedTotalPL}
           </div>
           <div className="text-sm text-slate-500">Total P/L</div>
         </div>
       </div>
       
-      <div className="relative w-full h-[400px]">
+      <div className="relative w-full h-[300px] md:h-[400px]">
         {/* Grid lines */}
         <div className="absolute inset-0 flex flex-col justify-between">
           {[...Array(5)].map((_, i) => (
@@ -161,7 +161,7 @@ export function PerformanceChart() {
         </div>
         
         {/* Y-axis labels */}
-        <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-slate-400 py-6">
+        <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-[10px] md:text-xs text-slate-400 py-3 md:py-6">
           <div>${yAxisMax}</div>
           <div>${yAxisMax / 2}</div>
           <div>$0</div>
@@ -233,8 +233,12 @@ export function PerformanceChart() {
         </div>
         
         {/* X-axis month labels */}
-        <div className="absolute bottom-0 left-12 right-0 flex text-xs text-slate-500 pb-1">
+        <div className="absolute bottom-0 left-12 right-0 flex text-[10px] md:text-xs text-slate-500 pb-1">
           {chartData.map((data, i) => {
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            if (isMobile && i % 2 !== 0) {
+              return null;
+            }
             const position = i * (barWidth + barGap) + barWidth/2;
             return (
               <div key={i} className="absolute text-center" style={{left: `${position}%`, transform: 'translateX(-50%)'}}>
